@@ -65,6 +65,12 @@
         }
       };
       this.onResize = () => this.positionMenu();
+      this.onScroll = (event) => {
+        if (this.$menu && !this.$menu[0].contains(event.target)) {
+          cancelAnimationFrame(this.scrollFrame);
+          this.scrollFrame = requestAnimationFrame(() => this.$menu && this.positionMenu());
+        }
+      };
       this.onKeydown = (event) => {
         if (event.key === 'Escape') {
           this.close();
@@ -98,6 +104,7 @@
     ensureSavedKeys() {
       const source = this.index.sourceKey;
       if (source && this.savedKeysSource !== source && this.loadingSavedKeysFor !== source) {
+        this.$btn.removeClass('saved-filters-btn--has-filters');
         this.loadSavedKeys();
       }
     }
@@ -120,6 +127,7 @@
     setSavedKeys(filters, source = this.index.sourceKey) {
       this.savedKeys = new Set(filters.map((filter) => canonicalFilter(filter.serialized)));
       this.savedKeysSource = source;
+      this.$btn.toggleClass('saved-filters-btn--has-filters', filters.length > 0);
       this.updateSaveButtons();
     }
 
@@ -202,6 +210,7 @@
       this.$btn.attr('aria-expanded', 'true');
       $(document).on('mousedown', this.onDocumentPointer).on('keydown', this.onKeydown);
       $(window).on('resize', this.onResize);
+      window.addEventListener('scroll', this.onScroll, true);
 
       await this.refresh();
     }
@@ -217,6 +226,8 @@
       this.$btn.attr('aria-expanded', 'false');
       $(document).off('mousedown', this.onDocumentPointer).off('keydown', this.onKeydown);
       $(window).off('resize', this.onResize);
+      window.removeEventListener('scroll', this.onScroll, true);
+      cancelAnimationFrame(this.scrollFrame);
     }
 
     async refresh() {

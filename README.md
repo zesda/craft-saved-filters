@@ -4,6 +4,8 @@ Save and reapply element index filters in the Craft control panel.
 
 A bookmark button sits beside the filter button on every element index page. Filters are saved per element type and source (section), so each one only appears where it was created.
 
+![The saved filters dropdown beside the filter button](docs/saved-filters.png)
+
 ## Requirements
 
 - Craft CMS 5.0 or later
