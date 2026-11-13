@@ -1,5 +1,9 @@
 # Release Notes for Saved Filters
 
+## 1.1.1 - 2026-11-13
+
+- Saved filters are now deleted when their section, volume, category group, tag group, user group or custom source is deleted.
+
 ## 1.1.0 - 2026-11-13
 
 - Added permissions for shared filters: view, share, edit and delete. Sharing was previously admin-only. Non-admin users now need "View shared filters" to see filters shared by others.

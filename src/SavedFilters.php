@@ -4,11 +4,25 @@ namespace zesda\savedfilters;
 
 use Craft;
 use craft\base\Plugin;
+use craft\events\CategoryGroupEvent;
+use craft\events\ConfigEvent;
 use craft\events\RegisterUserPermissionsEvent;
+use craft\events\SectionEvent;
+use craft\events\TagGroupEvent;
+use craft\events\UserGroupEvent;
+use craft\events\VolumeEvent;
 use craft\helpers\Html;
+use craft\models\Section;
+use craft\services\Categories;
+use craft\services\Entries;
+use craft\services\ProjectConfig;
+use craft\services\Tags;
+use craft\services\UserGroups;
 use craft\services\UserPermissions;
+use craft\services\Volumes;
 use craft\web\View;
 use yii\base\Event;
+use zesda\savedfilters\records\SavedFilter;
 use zesda\savedfilters\web\assets\SavedFiltersAsset;
 
 class SavedFilters extends Plugin
@@ -49,6 +63,8 @@ class SavedFilters extends Plugin
             ];
         });
 
+        $this->registerSourceCleanup();
+
         $request = Craft::$app->getRequest();
         if ($request->getIsConsoleRequest() || !$request->getIsCpRequest()) {
             return;
@@ -69,5 +85,48 @@ class SavedFilters extends Plugin
                 $view->registerAssetBundle(SavedFiltersAsset::class);
             }
         });
+    }
+
+    private function registerSourceCleanup(): void
+    {
+        Event::on(Entries::class, Entries::EVENT_AFTER_DELETE_SECTION, function(SectionEvent $event) {
+            if ($event->section->type !== Section::TYPE_SINGLE) {
+                $this->deleteForSource('section:' . $event->section->uid);
+            }
+        });
+        Event::on(Volumes::class, Volumes::EVENT_AFTER_DELETE_VOLUME, function(VolumeEvent $event) {
+            $this->deleteForSource('volume:' . $event->volume->uid);
+        });
+        Event::on(Categories::class, Categories::EVENT_AFTER_DELETE_GROUP, function(CategoryGroupEvent $event) {
+            $this->deleteForSource('group:' . $event->categoryGroup->uid);
+        });
+        Event::on(Tags::class, Tags::EVENT_AFTER_DELETE_GROUP, function(TagGroupEvent $event) {
+            $this->deleteForSource('taggroup:' . $event->tagGroup->uid);
+        });
+        Event::on(UserGroups::class, UserGroups::EVENT_AFTER_DELETE_USER_GROUP, function(UserGroupEvent $event) {
+            $this->deleteForSource('group:' . $event->userGroup->uid);
+        });
+
+        $projectConfig = Craft::$app->getProjectConfig();
+        $path = ProjectConfig::PATH_ELEMENT_SOURCES . '.{elementType}';
+        $projectConfig->onUpdate($path, [$this, 'handleElementSourcesChange']);
+        $projectConfig->onRemove($path, [$this, 'handleElementSourcesChange']);
+    }
+
+    public function handleElementSourcesChange(ConfigEvent $event): void
+    {
+        $keys = fn($sources) => array_column(is_array($sources) ? $sources : [], 'key');
+        $removed = array_diff($keys($event->oldValue), $keys($event->newValue));
+
+        foreach ($removed as $key) {
+            if (is_string($key) && str_starts_with($key, 'custom:')) {
+                $this->deleteForSource($key);
+            }
+        }
+    }
+
+    private function deleteForSource(string $sourceKey): void
+    {
+        SavedFilter::deleteAll(['or', ['sourceKey' => $sourceKey], ['like', 'sourceKey', $sourceKey . '/%', false]]);
     }
 }

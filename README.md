@@ -25,7 +25,7 @@ php craft plugin/install saved-filters
 - Users with the **Create shared filters** permission, and admins, can share a filter with all users. Shared filters show a two-person icon and can be unshared from the edit modal.
 - On narrow screens the saved filters dropdown becomes a centred modal, matching Craft's own filter dropdown.
 
-Filters are private to their owner unless shared. Everyone can save, apply, edit and delete their own filters.
+Filters are private to their owner unless shared. Everyone can save, apply, edit and delete their own filters. Deleting a section, volume, group or custom source also deletes the filters saved for it.
 
 ## Permissions
 
