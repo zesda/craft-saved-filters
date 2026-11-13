@@ -22,10 +22,21 @@ php craft plugin/install saved-filters
 
 - Build a filter, then click **Save** next to **Apply** in the filter panel. Name it, then choose **Save** or **Save & apply**.
 - Open the bookmark button to apply, edit or delete saved filters for the current source. A dot marks a filter you've just saved.
-- Admins can share a filter with all users. Shared filters show a two-person icon and can be unshared from the edit modal.
+- Users with the **Create shared filters** permission, and admins, can share a filter with all users. Shared filters show a two-person icon and can be unshared from the edit modal.
 - On narrow screens the saved filters dropdown becomes a centred modal, matching Craft's own filter dropdown.
 
-Filters are private to their owner. Owners and admins can edit or delete a filter.
+Filters are private to their owner unless shared. Everyone can save, apply, edit and delete their own filters.
+
+## Permissions
+
+Permissions only govern shared filters. Admins have all of them. Other users need them granted under **Saved Filters** in their user group or user permissions:
+
+- **View shared filters**: lets the user see and apply filters that other users have shared. Without it they only see their own.
+- **Create shared filters**: lets the user share and unshare their own filters.
+- **Edit filters shared by other users**: lets the user rename shared filters they don't own.
+- **Delete filters shared by other users**: lets the user delete shared filters they don't own.
+
+The last three are nested under **View shared filters**.
 
 ## Notes
 

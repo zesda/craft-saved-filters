@@ -8,6 +8,7 @@ use craft\elements\conditions\ElementConditionInterface;
 use craft\helpers\Component;
 use craft\web\Controller;
 use zesda\savedfilters\records\SavedFilter;
+use zesda\savedfilters\SavedFilters;
 use yii\web\BadRequestHttpException;
 use yii\web\ForbiddenHttpException;
 use yii\web\NotFoundHttpException;
@@ -39,18 +40,21 @@ class FiltersController extends Controller
 
         $records = SavedFilter::find()
             ->where(['elementType' => $elementType, 'sourceKey' => $sourceKey])
-            ->andWhere(['or', ['userId' => $user->id], ['isShared' => true]])
+            ->andWhere($this->canViewShared()
+                ? ['or', ['userId' => $user->id], ['isShared' => true]]
+                : ['userId' => $user->id])
             ->orderBy(['name' => SORT_ASC])
             ->all();
 
         return $this->asJson([
-            'canShare' => $user->admin,
+            'canShare' => $this->canShare(),
             'filters' => array_map(fn(SavedFilter $record) => [
                 'id' => $record->id,
                 'name' => $record->name,
                 'serialized' => $record->serialized,
                 'shared' => (bool)$record->isShared,
-                'canEdit' => $this->canModify($record),
+                'canEdit' => $this->canEdit($record),
+                'canDelete' => $this->canDelete($record),
             ], $records),
         ]);
     }
@@ -63,7 +67,7 @@ class FiltersController extends Controller
         $user = Craft::$app->getUser()->getIdentity();
         $name = trim((string)$this->request->getBodyParam('name'));
         $serialized = (string)$this->request->getRequiredBodyParam('serialized');
-        $shared = $user->admin && (bool)$this->request->getBodyParam('shared');
+        $shared = $this->canShare() && (bool)$this->request->getBodyParam('shared');
         $elementType = $this->validElementType((string)$this->request->getRequiredBodyParam('elementType'));
         $sourceKey = (string)$this->request->getRequiredBodyParam('sourceKey');
 
@@ -112,7 +116,7 @@ class FiltersController extends Controller
         if (!$record) {
             throw new NotFoundHttpException('Saved filter not found.');
         }
-        if (!$this->canModify($record)) {
+        if (!$this->canEdit($record)) {
             throw new ForbiddenHttpException('Not allowed to edit this filter.');
         }
 
@@ -122,8 +126,9 @@ class FiltersController extends Controller
         }
 
         $record->name = $name;
-        if (Craft::$app->getUser()->getIdentity()->admin) {
-            $record->isShared = (bool)$this->request->getBodyParam('shared');
+        $sharedParam = $this->request->getBodyParam('shared');
+        if ($sharedParam !== null && $this->canShare()) {
+            $record->isShared = (bool)$sharedParam;
         }
         $record->save();
 
@@ -139,7 +144,7 @@ class FiltersController extends Controller
         if (!$record) {
             throw new NotFoundHttpException('Saved filter not found.');
         }
-        if (!$this->canModify($record)) {
+        if (!$this->canDelete($record)) {
             throw new ForbiddenHttpException('Not allowed to delete this filter.');
         }
 
@@ -148,11 +153,31 @@ class FiltersController extends Controller
         return $this->asSuccess('Filter deleted.');
     }
 
-    private function canModify(SavedFilter $record): bool
+    private function canShare(): bool
     {
-        $user = Craft::$app->getUser()->getIdentity();
+        return Craft::$app->getUser()->checkPermission(SavedFilters::PERMISSION_CREATE_SHARED);
+    }
 
-        return $user->admin || (int)$record->userId === (int)$user->id;
+    private function canViewShared(): bool
+    {
+        return Craft::$app->getUser()->checkPermission(SavedFilters::PERMISSION_VIEW_SHARED);
+    }
+
+    private function isOwner(SavedFilter $record): bool
+    {
+        return (int)$record->userId === (int)Craft::$app->getUser()->getId();
+    }
+
+    private function canEdit(SavedFilter $record): bool
+    {
+        return $this->isOwner($record)
+            || ($record->isShared && Craft::$app->getUser()->checkPermission(SavedFilters::PERMISSION_EDIT_SHARED));
+    }
+
+    private function canDelete(SavedFilter $record): bool
+    {
+        return $this->isOwner($record)
+            || ($record->isShared && Craft::$app->getUser()->checkPermission(SavedFilters::PERMISSION_DELETE_SHARED));
     }
 
     private function validElementType(string $elementType): string

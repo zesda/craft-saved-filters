@@ -295,6 +295,8 @@
         this.iconButton('edit', 'Edit')
           .on('click', () => this.openEditModal(filter))
           .appendTo($actions);
+      }
+      if (filter.canDelete) {
         this.iconButton('delete', 'Delete')
           .addClass('saved-filters-menu__delete')
           .on('click', () => this.remove(filter.id))

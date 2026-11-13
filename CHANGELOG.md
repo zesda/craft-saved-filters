@@ -1,5 +1,9 @@
 # Release Notes for Saved Filters
 
+## 1.1.0 - 2026-11-13
+
+- Added permissions for shared filters: view, share, edit and delete. Sharing was previously admin-only. Non-admin users now need "View shared filters" to see filters shared by others.
+
 ## 1.0.0 - 2026-11-13
 
 - Added a bookmark button beside the element index filter button.
