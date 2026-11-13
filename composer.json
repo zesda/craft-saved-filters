@@ -2,9 +2,10 @@
     "type": "craft-plugin",
     "name": "zesda/craft-saved-filters",
     "description": "Save and reapply element index filters in the Craft control panel",
+    "license": "MIT",
     "authors": [
         {
-            "name": "Zesda"
+            "name": "Chris Rees"
         }
     ],
     "support": {
@@ -26,8 +27,9 @@
     "extra": {
         "name": "Saved Filters",
         "handle": "saved-filters",
-        "developer": "Zesda",
+        "developer": "Chris Rees",
         "documentationUrl": "https://github.com/zesda/craft-saved-filters",
+        "changelogUrl": "https://raw.githubusercontent.com/zesda/craft-saved-filters/main/CHANGELOG.md",
         "class": "zesda\\savedfilters\\SavedFilters"
     }
 }
