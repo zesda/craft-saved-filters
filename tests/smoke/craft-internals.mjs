@@ -4,13 +4,13 @@
 //
 // Usage: node tests/smoke/craft-internals.mjs [path-to-craftcms/cms]
 //
-// The path defaults to ../vow-cms/vendor/craftcms/cms. It must contain the
+// The path defaults to vendor/craftcms/cms (run composer install first). It must contain the
 // src/web/assets/cp/dist and src/web/assets/garnish/dist source maps.
 
 import {existsSync, readFileSync} from 'node:fs';
 import {join, resolve} from 'node:path';
 
-const craftDir = resolve(process.argv[2] || '../vow-cms/vendor/craftcms/cms');
+const craftDir = resolve(process.argv[2] || 'vendor/craftcms/cms');
 const cpMapPath = join(craftDir, 'src/web/assets/cp/dist/cp.js.map');
 const garnishMapPath = join(craftDir, 'src/web/assets/garnish/dist/garnish.js.map');
 const indexTemplatePath = join(craftDir, 'src/templates/_layouts/elementindex.twig');

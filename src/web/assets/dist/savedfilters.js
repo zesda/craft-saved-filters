@@ -299,7 +299,7 @@
       data.filters.forEach((filter) => this.renderItem(filter).appendTo(this.$menu));
 
       if (restoreFocus) {
-        const $first = this.focusables().not('[aria-disabled="true"]').first();
+        const $first = this.$menu.find('button:not(:disabled)').not('[aria-disabled="true"]').first();
         ($first.length ? $first : this.$menu).trigger('focus');
       }
     }
