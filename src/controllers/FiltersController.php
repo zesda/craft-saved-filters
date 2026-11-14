@@ -75,7 +75,7 @@ class FiltersController extends Controller
         $sourceKey = (string)$this->request->getRequiredBodyParam('sourceKey');
 
         if (mb_strlen($name) > 255) {
-            throw new BadRequestHttpException('Name must be 255 characters or fewer.');
+            throw new BadRequestHttpException(Craft::t('saved-filters', 'Name must be 255 characters or fewer.'));
         }
 
         $this->assertValidFilter($serialized);
@@ -101,7 +101,7 @@ class FiltersController extends Controller
             'userId' => $user->id,
             'elementType' => $elementType,
             'sourceKey' => $sourceKey,
-            'name' => $name !== '' ? $name : 'Filter ' . date('j M Y H:i'),
+            'name' => $name !== '' ? $name : Craft::t('saved-filters', 'Filter {date}', ['date' => date('j M Y H:i')]),
             'serialized' => $serialized,
             'isShared' => $shared,
         ]);
@@ -117,15 +117,15 @@ class FiltersController extends Controller
 
         $record = SavedFilter::findOne((int)$this->request->getRequiredBodyParam('id'));
         if (!$record) {
-            throw new NotFoundHttpException('Saved filter not found.');
+            throw new NotFoundHttpException(Craft::t('saved-filters', 'Saved filter not found.'));
         }
         if (!$this->canEdit($record)) {
-            throw new ForbiddenHttpException('Not allowed to edit this filter.');
+            throw new ForbiddenHttpException(Craft::t('saved-filters', 'Not allowed to edit this filter.'));
         }
 
         $name = trim((string)$this->request->getRequiredBodyParam('name'));
         if ($name === '' || mb_strlen($name) > 255) {
-            throw new BadRequestHttpException('Name must be between 1 and 255 characters.');
+            throw new BadRequestHttpException(Craft::t('saved-filters', 'Name must be between 1 and 255 characters.'));
         }
 
         $record->name = $name;
@@ -135,7 +135,7 @@ class FiltersController extends Controller
         }
         $record->save();
 
-        return $this->asSuccess('Filter updated.');
+        return $this->asSuccess(Craft::t('saved-filters', 'Filter updated.'));
     }
 
     public function actionDelete(): Response
@@ -145,15 +145,15 @@ class FiltersController extends Controller
 
         $record = SavedFilter::findOne((int)$this->request->getRequiredBodyParam('id'));
         if (!$record) {
-            throw new NotFoundHttpException('Saved filter not found.');
+            throw new NotFoundHttpException(Craft::t('saved-filters', 'Saved filter not found.'));
         }
         if (!$this->canDelete($record)) {
-            throw new ForbiddenHttpException('Not allowed to delete this filter.');
+            throw new ForbiddenHttpException(Craft::t('saved-filters', 'Not allowed to delete this filter.'));
         }
 
         $record->delete();
 
-        return $this->asSuccess('Filter deleted.');
+        return $this->asSuccess(Craft::t('saved-filters', 'Filter deleted.'));
     }
 
     private function canShare(): bool
@@ -186,7 +186,7 @@ class FiltersController extends Controller
     private function validElementType(string $elementType): string
     {
         if (!is_subclass_of($elementType, ElementInterface::class)) {
-            throw new BadRequestHttpException('Invalid element type.');
+            throw new BadRequestHttpException(Craft::t('saved-filters', 'Invalid element type.'));
         }
 
         return $elementType;
@@ -243,23 +243,23 @@ class FiltersController extends Controller
     private function assertValidFilter(string $serialized): void
     {
         if ($serialized === '' || strlen($serialized) > self::MAX_SERIALIZED_LENGTH) {
-            throw new BadRequestHttpException('Invalid filter.');
+            throw new BadRequestHttpException(Craft::t('saved-filters', 'Invalid filter.'));
         }
 
         parse_str($serialized, $params);
         $config = $params['condition'] ?? null;
         if (!is_array($config)) {
-            throw new BadRequestHttpException('Invalid filter.');
+            throw new BadRequestHttpException(Craft::t('saved-filters', 'Invalid filter.'));
         }
 
         try {
             $condition = Craft::$app->getConditions()->createCondition(Component::cleanseConfig($config));
         } catch (\Throwable) {
-            throw new BadRequestHttpException('Invalid filter.');
+            throw new BadRequestHttpException(Craft::t('saved-filters', 'Invalid filter.'));
         }
 
         if (!$condition instanceof ElementConditionInterface) {
-            throw new BadRequestHttpException('Invalid filter.');
+            throw new BadRequestHttpException(Craft::t('saved-filters', 'Invalid filter.'));
         }
     }
 }

@@ -42,20 +42,20 @@ class SavedFilters extends Plugin
 
         Event::on(UserPermissions::class, UserPermissions::EVENT_REGISTER_PERMISSIONS, function(RegisterUserPermissionsEvent $event) {
             $event->permissions[] = [
-                'heading' => 'Saved Filters',
+                'heading' => Craft::t('saved-filters', 'Saved Filters'),
                 'permissions' => [
                     self::PERMISSION_VIEW_SHARED => [
-                        'label' => 'View shared filters',
-                        'info' => 'Apply filters that other users have shared. Everyone can manage their own filters.',
+                        'label' => Craft::t('saved-filters', 'View shared filters'),
+                        'info' => Craft::t('saved-filters', 'Apply filters that other users have shared. Everyone can manage their own filters.'),
                         'nested' => [
                             self::PERMISSION_CREATE_SHARED => [
-                                'label' => 'Create shared filters',
+                                'label' => Craft::t('saved-filters', 'Create shared filters'),
                             ],
                             self::PERMISSION_EDIT_SHARED => [
-                                'label' => 'Edit filters shared by other users',
+                                'label' => Craft::t('saved-filters', 'Edit filters shared by other users'),
                             ],
                             self::PERMISSION_DELETE_SHARED => [
-                                'label' => 'Delete filters shared by other users',
+                                'label' => Craft::t('saved-filters', 'Delete filters shared by other users'),
                             ],
                         ],
                     ],

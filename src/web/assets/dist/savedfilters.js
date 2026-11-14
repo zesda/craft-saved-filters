@@ -4,6 +4,8 @@
   const WAIT_INTERVAL_MS = 100;
   const MODAL_BREAKPOINT = 450;
 
+  const t = (message, params) => Craft.t('saved-filters', message, params);
+
   function whenIndexReady(callback, attempt = 0) {
     const index = window.Craft && Craft.elementIndex;
     if (index && index.initialized && index.settings.context === 'index' && index.$filterBtn.length) {
@@ -12,9 +14,6 @@
       setTimeout(() => whenIndexReady(callback, attempt + 1), WAIT_INTERVAL_MS);
     }
   }
-
-  const SAVED_TITLE = 'This filter is already saved';
-  const EMPTY_TITLE = 'Add a filter to save it';
 
   function canonicalFilter(serialized) {
     const base = [];
@@ -49,8 +48,8 @@
       this.$btn = $('<button/>', {
         type: 'button',
         class: 'saved-filters-btn',
-        title: 'Saved filters',
-        'aria-label': 'Saved filters',
+        title: t('Saved filters'),
+        'aria-label': t('Saved filters'),
         'aria-haspopup': 'true',
         'aria-expanded': 'false',
       }).insertAfter(index.$filterBtn);
@@ -84,7 +83,7 @@
         $('.element-filter-hud').each((_, hudEl) => {
           const $submit = $(hudEl).find('button[type="submit"]');
           if ($submit.length && !$(hudEl).find('.saved-filters-save').length) {
-            $('<button/>', {type: 'button', class: 'btn saved-filters-save saved-filters-tip', text: 'Save'})
+            $('<button/>', {type: 'button', class: 'btn saved-filters-save saved-filters-tip', text: t('Save')})
               .on('click', (event) => {
                 if ($(event.currentTarget).attr('aria-disabled') !== 'true') {
                   this.openSaveModal();
@@ -137,10 +136,10 @@
       let title = '';
       if (!current) {
         disabled = true;
-        title = EMPTY_TITLE;
+        title = t('Add a filter to save it');
       } else if (this.savedKeysSource === this.index.sourceKey && this.savedKeys.has(canonicalFilter(current))) {
         disabled = true;
-        title = SAVED_TITLE;
+        title = t('This filter is already saved');
       }
 
       $('.saved-filters-save')
@@ -204,7 +203,7 @@
 
     async open() {
       this.$dot.removeClass('is-popping');
-      this.$menu = $('<div/>', {class: 'saved-filters-menu', role: 'dialog', 'aria-label': 'Saved filters'})
+      this.$menu = $('<div/>', {class: 'saved-filters-menu', role: 'dialog', 'aria-label': t('Saved filters')})
         .appendTo(document.body);
       this.positionMenu();
       this.$btn.attr('aria-expanded', 'true');
@@ -252,10 +251,10 @@
 
     render(data) {
       this.$menu.empty();
-      $('<div/>', {class: 'saved-filters-menu__heading', text: 'Saved filters'}).appendTo(this.$menu);
+      $('<div/>', {class: 'saved-filters-menu__heading', text: t('Saved filters')}).appendTo(this.$menu);
 
       if (!data.filters.length) {
-        $('<div/>', {class: 'saved-filters-menu__empty', text: 'No saved filters for this section yet.'}).appendTo(this.$menu);
+        $('<div/>', {class: 'saved-filters-menu__empty', text: t('No saved filters for this section yet.')}).appendTo(this.$menu);
       }
 
       data.filters.forEach((filter) => this.renderItem(filter).appendTo(this.$menu));
@@ -265,7 +264,7 @@
       const $item = $('<div/>', {class: 'saved-filters-menu__item'});
       $('<span/>', {class: 'saved-filters-menu__name', text: filter.name}).appendTo($item);
       if (filter.id === this.newFilterId) {
-        $('<span/>', {class: 'saved-filters-menu__new-dot', title: '', 'aria-label': 'Newly saved'}).appendTo($item);
+        $('<span/>', {class: 'saved-filters-menu__new-dot', title: '', 'aria-label': t('Newly saved')}).appendTo($item);
       }
       if (filter.ignoredRules > 0) {
         const message = this.staleMessage(filter);
@@ -278,11 +277,12 @@
         }).appendTo($item);
       }
       if (filter.shared) {
+        const sharedMessage = t('Shared with all users');
         $('<span/>', {
           class: 'saved-filters-menu__shared saved-filters-tip',
-          'aria-label': 'Shared with all users',
-          'data-tooltip': 'Shared with all users',
-          html: (window.SavedFiltersIcons && window.SavedFiltersIcons.shared) || 'Shared',
+          'aria-label': sharedMessage,
+          'data-tooltip': sharedMessage,
+          html: (window.SavedFiltersIcons && window.SavedFiltersIcons.shared) || t('Shared'),
         }).appendTo($item);
       }
       const $actions = $('<div/>', {class: 'saved-filters-menu__actions'}).appendTo($item);
@@ -292,7 +292,7 @@
       $('<button/>', {
         type: 'button',
         class: 'btn small secondary' + (disabled ? ' disabled' : ''),
-        text: applied ? 'Applied' : 'Apply',
+        text: applied ? t('Applied') : t('Apply'),
         'aria-disabled': disabled ? 'true' : null,
       })
         .on('click', () => {
@@ -306,12 +306,12 @@
         .appendTo($actions);
 
       if (filter.canEdit) {
-        this.iconButton('edit', 'Edit')
+        this.iconButton('edit', t('Edit'))
           .on('click', () => this.openEditModal(filter))
           .appendTo($actions);
       }
       if (filter.canDelete) {
-        this.iconButton('delete', 'Delete')
+        this.iconButton('delete', t('Delete'))
           .addClass('saved-filters-menu__delete')
           .on('click', () => this.remove(filter.id))
           .appendTo($actions);
@@ -326,10 +326,11 @@
 
     staleMessage(filter) {
       if (this.isUnusable(filter)) {
-        return 'This filter can no longer be applied: the fields it uses have been deleted.';
+        return t('This filter can no longer be applied: the fields it uses have been deleted.');
       }
-      const count = filter.ignoredRules;
-      return count + (count === 1 ? ' rule is' : ' rules are') + ' ignored: the field no longer exists.';
+      return t('{count, plural, =1{# rule is ignored: the field no longer exists.} other{# rules are ignored: the field no longer exists.}}', {
+        count: filter.ignoredRules,
+      });
     }
 
     iconButton(icon, label) {
@@ -344,7 +345,7 @@
     openSaveModal() {
       const serialized = this.currentFilter;
       if (!serialized) {
-        Craft.cp.displayNotice('Add a filter before saving.');
+        Craft.cp.displayNotice(t('Add a filter before saving.'));
         return;
       }
 
@@ -378,7 +379,7 @@
       const $form = $('<form/>', {class: 'modal fitted saved-filters-modal'});
       const $body = $('<div/>', {class: 'body'}).appendTo($form);
       const $field = $('<div/>', {class: 'field'}).appendTo($body);
-      $('<div/>', {class: 'heading'}).append($('<label/>', {for: inputId, text: 'Name'})).appendTo($field);
+      $('<div/>', {class: 'heading'}).append($('<label/>', {for: inputId, text: t('Name')})).appendTo($field);
       const $name = $('<input/>', {
         type: 'text',
         id: inputId,
@@ -394,15 +395,15 @@
         const shareId = inputId + '-share';
         $share = $('<input/>', {type: 'checkbox', id: shareId, class: 'checkbox', checked: !!shared});
         $('<div/>', {class: 'field checkboxfield'})
-          .append($('<div/>', {class: 'input ltr'}).append($share).append($('<label/>', {for: shareId, text: 'Share with all users'})))
+          .append($('<div/>', {class: 'input ltr'}).append($share).append($('<label/>', {for: shareId, text: t('Share with all users')})))
           .appendTo($body);
       }
 
       const $buttons = $('<div/>', {class: 'saved-filters-modal__buttons'}).appendTo($body);
-      const $cancel = $('<button/>', {type: 'button', class: 'btn', text: 'Cancel'}).appendTo($buttons);
-      const $save = $('<button/>', {type: 'submit', class: 'btn' + (allowApply ? '' : ' secondary'), text: 'Save'}).appendTo($buttons);
+      const $cancel = $('<button/>', {type: 'button', class: 'btn', text: t('Cancel')}).appendTo($buttons);
+      const $save = $('<button/>', {type: 'submit', class: 'btn' + (allowApply ? '' : ' secondary'), text: t('Save')}).appendTo($buttons);
       const $saveApply = allowApply
-        ? $('<button/>', {type: 'button', class: 'btn secondary', text: 'Save & apply'}).appendTo($buttons)
+        ? $('<button/>', {type: 'button', class: 'btn secondary', text: t('Save & apply')}).appendTo($buttons)
         : null;
 
       const modal = new Garnish.Modal($form, {
@@ -473,7 +474,7 @@
       }
 
       if (result.duplicate) {
-        Craft.cp.displayNotice('This filter is already saved.');
+        Craft.cp.displayNotice(t('This filter is already saved.'));
       } else {
         this.newFilterId = result.id;
         this.popDot();
@@ -518,7 +519,7 @@
     }
 
     errorMessage(error) {
-      return (error && error.response && error.response.data && error.response.data.message) || 'Something went wrong.';
+      return (error && error.response && error.response.data && error.response.data.message) || t('Something went wrong.');
     }
   }
 

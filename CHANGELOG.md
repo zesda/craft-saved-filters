@@ -1,5 +1,9 @@
 # Release Notes for Saved Filters
 
+## 1.1.3 - 2026-11-14
+
+- Made all interface strings translatable through the `saved-filters` translation category.
+
 ## 1.1.2 - 2026-11-14
 
 - Saved filters that use a field that has since been deleted now show a warning in the menu. Their remaining rules still apply, with a notice. A filter with no usable rules can no longer be applied, where before it applied silently and showed every entry.

@@ -38,6 +38,16 @@ Permissions only govern shared filters. Admins have all of them. Other users nee
 
 The last three are nested under **View shared filters**.
 
+## Translations
+
+All strings use the `saved-filters` translation category. Add translations in your project's `translations/<language>/saved-filters.php`, keyed by the English string:
+
+```php
+return [
+    'Apply' => 'Anwenden',
+];
+```
+
 ## Notes
 
 The button script relies on Craft's element index JavaScript (`Craft.elementIndex`, `createFilterHud`), which isn't a public API, and may need adjusting after Craft upgrades. If those globals aren't present the plugin does nothing.
