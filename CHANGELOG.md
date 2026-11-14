@@ -1,5 +1,9 @@
 # Release Notes for Saved Filters
 
+## 1.1.2 - 2026-11-14
+
+- Saved filters that use a field that has since been deleted now show a warning in the menu. Their remaining rules still apply, with a notice. A filter with no usable rules can no longer be applied, where before it applied silently and showed every entry.
+
 ## 1.1.1 - 2026-11-13
 
 - Saved filters are now deleted when their section, volume, category group, tag group, user group or custom source is deleted.

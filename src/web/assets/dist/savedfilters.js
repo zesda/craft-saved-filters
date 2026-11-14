@@ -267,6 +267,16 @@
       if (filter.id === this.newFilterId) {
         $('<span/>', {class: 'saved-filters-menu__new-dot', title: '', 'aria-label': 'Newly saved'}).appendTo($item);
       }
+      if (filter.ignoredRules > 0) {
+        const message = this.staleMessage(filter);
+        $('<span/>', {
+          class: 'saved-filters-menu__stale saved-filters-tip',
+          tabindex: 0,
+          'aria-label': message,
+          'data-tooltip': message,
+          html: (window.SavedFiltersIcons && window.SavedFiltersIcons.warning) || '!',
+        }).appendTo($item);
+      }
       if (filter.shared) {
         $('<span/>', {
           class: 'saved-filters-menu__shared saved-filters-tip',
@@ -278,15 +288,19 @@
       const $actions = $('<div/>', {class: 'saved-filters-menu__actions'}).appendTo($item);
 
       const applied = this.appliedFilter === canonicalFilter(filter.serialized);
+      const disabled = applied || this.isUnusable(filter);
       $('<button/>', {
         type: 'button',
-        class: 'btn small secondary' + (applied ? ' disabled' : ''),
+        class: 'btn small secondary' + (disabled ? ' disabled' : ''),
         text: applied ? 'Applied' : 'Apply',
-        'aria-disabled': applied ? 'true' : null,
+        'aria-disabled': disabled ? 'true' : null,
       })
         .on('click', () => {
-          if (!applied) {
+          if (!disabled) {
             this.apply(filter.serialized);
+            if (filter.ignoredRules > 0) {
+              Craft.cp.displayNotice(this.staleMessage(filter));
+            }
           }
         })
         .appendTo($actions);
@@ -304,6 +318,18 @@
       }
 
       return $item;
+    }
+
+    isUnusable(filter) {
+      return filter.totalRules > 0 && filter.ignoredRules >= filter.totalRules;
+    }
+
+    staleMessage(filter) {
+      if (this.isUnusable(filter)) {
+        return 'This filter can no longer be applied: the fields it uses have been deleted.';
+      }
+      const count = filter.ignoredRules;
+      return count + (count === 1 ? ' rule is' : ' rules are') + ' ignored: the field no longer exists.';
     }
 
     iconButton(icon, label) {

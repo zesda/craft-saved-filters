@@ -9,6 +9,7 @@ use craft\helpers\Component;
 use craft\web\Controller;
 use zesda\savedfilters\records\SavedFilter;
 use zesda\savedfilters\SavedFilters;
+use yii\base\InvalidConfigException;
 use yii\web\BadRequestHttpException;
 use yii\web\ForbiddenHttpException;
 use yii\web\NotFoundHttpException;
@@ -52,6 +53,8 @@ class FiltersController extends Controller
                 'id' => $record->id,
                 'name' => $record->name,
                 'serialized' => $record->serialized,
+                'ignoredRules' => $this->countIgnoredRules($record),
+                'totalRules' => $this->countRules($record->serialized),
                 'shared' => (bool)$record->isShared,
                 'canEdit' => $this->canEdit($record),
                 'canDelete' => $this->canDelete($record),
@@ -187,6 +190,54 @@ class FiltersController extends Controller
         }
 
         return $elementType;
+    }
+
+    private function filterConfig(string $serialized): ?array
+    {
+        parse_str($serialized, $params);
+        $config = $params['condition'] ?? null;
+
+        return is_array($config) ? $config : null;
+    }
+
+    private function countRules(string $serialized): int
+    {
+        $rules = $this->filterConfig($serialized)['conditionRules'] ?? [];
+
+        return is_array($rules) ? count($rules) : 0;
+    }
+
+    private function countIgnoredRules(SavedFilter $record): int
+    {
+        $config = $this->filterConfig($record->serialized);
+        if ($config === null) {
+            return 0;
+        }
+
+        $total = $this->countRules($record->serialized);
+
+        try {
+            $condition = Craft::$app->getConditions()->createCondition(Component::cleanseConfig($config));
+        } catch (\Throwable) {
+            return $total;
+        }
+
+        if (!$condition instanceof ElementConditionInterface || !is_subclass_of($record->elementType, ElementInterface::class)) {
+            return 0;
+        }
+
+        $rules = $condition->getConditionRules();
+        $ignored = max(0, $total - count($rules));
+
+        foreach ($rules as $rule) {
+            try {
+                $rule->modifyQuery($record->elementType::find());
+            } catch (InvalidConfigException) {
+                $ignored++;
+            }
+        }
+
+        return $ignored;
     }
 
     private function assertValidFilter(string $serialized): void

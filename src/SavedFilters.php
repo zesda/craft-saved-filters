@@ -78,6 +78,7 @@ class SavedFilters extends Plugin
                     'edit' => Html::svg(Craft::getAlias('@app/icons/solid/pencil.svg')),
                     'shared' => Html::svg(Craft::getAlias('@app/icons/solid/user-group.svg')),
                     'delete' => Html::svg(Craft::getAlias('@app/icons/solid/trash.svg')),
+                    'warning' => Html::svg(Craft::getAlias('@app/icons/solid/triangle-exclamation.svg')),
                 ]);
                 $view->registerJsVar('SavedFiltersConfig', [
                     'canShare' => $user->checkPermission(self::PERMISSION_CREATE_SHARED),

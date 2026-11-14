@@ -95,6 +95,19 @@
   color: var(--fg-subtle);
 }
 
+.saved-filters-menu__stale {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  color: var(--warning-color, #c8651a);
+}
+
+.saved-filters-menu__stale svg {
+  width: 14px;
+  height: 14px;
+  fill: currentColor;
+}
+
 .saved-filters-menu__shared svg {
   width: 14px;
   height: 14px;
@@ -246,6 +259,15 @@
   border-block-end: 1px solid var(--border-hairline-dark, rgba(31, 41, 51, 0.2));
   background: var(--white);
   z-index: 2;
+}
+
+.saved-filters-menu__item .saved-filters-tip[data-tooltip]:after {
+  inset-inline-start: auto;
+  inset-inline-end: -8px;
+  transform: none;
+  width: max-content;
+  max-width: 240px;
+  white-space: normal;
 }
 
 .saved-filters-tip[data-tooltip]:hover:before,
