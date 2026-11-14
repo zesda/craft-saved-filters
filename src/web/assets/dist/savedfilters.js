@@ -34,7 +34,7 @@
       }
       rules.get(match[1]).push([match[2], value]);
     });
-    return JSON.stringify([base.sort(), [...rules.values()].map((rule) => rule.sort())]);
+    return JSON.stringify([base.sort(), [...rules.values()].map((rule) => JSON.stringify(rule.sort())).sort()]);
   }
 
   class SavedFiltersMenu {

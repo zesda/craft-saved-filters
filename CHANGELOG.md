@@ -1,5 +1,9 @@
 # Release Notes for Saved Filters
 
+## 1.1.5 - 2026-11-14
+
+- Fixed a filter with several rules not counting as already saved or applied when its rules were in a different order, such as after removing a rule and adding it back.
+
 ## 1.1.4 - 2026-11-14
 
 - Moved focus into the saved filters menu when it opens and back to the bookmark button when it closes. Tab now cycles inside the menu when it shows as a modal.
