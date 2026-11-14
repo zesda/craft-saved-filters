@@ -7,8 +7,9 @@ use craft\base\ElementInterface;
 use craft\elements\conditions\ElementConditionInterface;
 use craft\helpers\Component;
 use craft\web\Controller;
+use zesda\savedfilters\FilterAccess;
+use zesda\savedfilters\FilterConfig;
 use zesda\savedfilters\records\SavedFilter;
-use zesda\savedfilters\SavedFilters;
 use yii\base\InvalidConfigException;
 use yii\web\BadRequestHttpException;
 use yii\web\ForbiddenHttpException;
@@ -54,7 +55,7 @@ class FiltersController extends Controller
                 'name' => $record->name,
                 'serialized' => $record->serialized,
                 'ignoredRules' => $this->countIgnoredRules($record),
-                'totalRules' => $this->countRules($record->serialized),
+                'totalRules' => FilterConfig::countRules($record->serialized),
                 'shared' => (bool)$record->isShared,
                 'canEdit' => $this->canEdit($record),
                 'canDelete' => $this->canDelete($record),
@@ -156,31 +157,31 @@ class FiltersController extends Controller
         return $this->asSuccess(Craft::t('saved-filters', 'Filter deleted.'));
     }
 
+    private function access(): FilterAccess
+    {
+        $user = Craft::$app->getUser();
+
+        return new FilterAccess((int)$user->getId(), fn(string $permission) => $user->checkPermission($permission));
+    }
+
     private function canShare(): bool
     {
-        return Craft::$app->getUser()->checkPermission(SavedFilters::PERMISSION_CREATE_SHARED);
+        return $this->access()->canShare();
     }
 
     private function canViewShared(): bool
     {
-        return Craft::$app->getUser()->checkPermission(SavedFilters::PERMISSION_VIEW_SHARED);
-    }
-
-    private function isOwner(SavedFilter $record): bool
-    {
-        return (int)$record->userId === (int)Craft::$app->getUser()->getId();
+        return $this->access()->canViewShared();
     }
 
     private function canEdit(SavedFilter $record): bool
     {
-        return $this->isOwner($record)
-            || ($record->isShared && Craft::$app->getUser()->checkPermission(SavedFilters::PERMISSION_EDIT_SHARED));
+        return $this->access()->canEdit((int)$record->userId, (bool)$record->isShared);
     }
 
     private function canDelete(SavedFilter $record): bool
     {
-        return $this->isOwner($record)
-            || ($record->isShared && Craft::$app->getUser()->checkPermission(SavedFilters::PERMISSION_DELETE_SHARED));
+        return $this->access()->canDelete((int)$record->userId, (bool)$record->isShared);
     }
 
     private function validElementType(string $elementType): string
@@ -192,29 +193,14 @@ class FiltersController extends Controller
         return $elementType;
     }
 
-    private function filterConfig(string $serialized): ?array
-    {
-        parse_str($serialized, $params);
-        $config = $params['condition'] ?? null;
-
-        return is_array($config) ? $config : null;
-    }
-
-    private function countRules(string $serialized): int
-    {
-        $rules = $this->filterConfig($serialized)['conditionRules'] ?? [];
-
-        return is_array($rules) ? count($rules) : 0;
-    }
-
     private function countIgnoredRules(SavedFilter $record): int
     {
-        $config = $this->filterConfig($record->serialized);
+        $config = FilterConfig::parse($record->serialized);
         if ($config === null) {
             return 0;
         }
 
-        $total = $this->countRules($record->serialized);
+        $total = FilterConfig::countRules($record->serialized);
 
         try {
             $condition = Craft::$app->getConditions()->createCondition(Component::cleanseConfig($config));
@@ -246,9 +232,8 @@ class FiltersController extends Controller
             throw new BadRequestHttpException(Craft::t('saved-filters', 'Invalid filter.'));
         }
 
-        parse_str($serialized, $params);
-        $config = $params['condition'] ?? null;
-        if (!is_array($config)) {
+        $config = FilterConfig::parse($serialized);
+        if ($config === null) {
             throw new BadRequestHttpException(Craft::t('saved-filters', 'Invalid filter.'));
         }
 
