@@ -50,7 +50,7 @@
         class: 'saved-filters-btn',
         title: t('Saved filters'),
         'aria-label': t('Saved filters'),
-        'aria-haspopup': 'true',
+        'aria-haspopup': 'dialog',
         'aria-expanded': 'false',
       }).insertAfter(index.$filterBtn);
       this.$dot = $('<span/>', {class: 'saved-filters-btn__dot', 'aria-hidden': 'true'}).appendTo(this.$btn);
@@ -74,6 +74,8 @@
         if (event.key === 'Escape') {
           this.close();
           this.$btn.trigger('focus');
+        } else if (event.key === 'Tab' && this.$menu && this.$menu.hasClass('is-modal')) {
+          this.trapFocus(event);
         }
       };
     }
@@ -204,8 +206,11 @@
     async open() {
       this.$dot.removeClass('is-popping');
       this.$menu = $('<div/>', {class: 'saved-filters-menu', role: 'dialog', 'aria-label': t('Saved filters')})
+        .attr('tabindex', '-1')
         .appendTo(document.body);
       this.positionMenu();
+      this.$menu.trigger('focus');
+      this.focusOnRender = true;
       this.$btn.attr('aria-expanded', 'true');
       $(document).on('mousedown', this.onDocumentPointer).on('keydown', this.onKeydown);
       $(window).on('resize', this.onResize);
@@ -218,9 +223,13 @@
       if (!this.$menu) {
         return;
       }
+      const hadFocus = this.focusInMenu();
       this.$menu.remove();
       this.$menu = null;
       this.hideShade();
+      if (hadFocus) {
+        this.$btn.trigger('focus');
+      }
       this.newFilterId = null;
       this.$btn.attr('aria-expanded', 'false');
       $(document).off('mousedown', this.onDocumentPointer).off('keydown', this.onKeydown);
@@ -249,7 +258,37 @@
       this.render(data);
     }
 
+    focusInMenu() {
+      const active = document.activeElement;
+      return !active || active === document.body || this.$menu[0].contains(active);
+    }
+
+    focusables() {
+      return this.$menu.find('button:not(:disabled), [tabindex="0"]').filter(':visible');
+    }
+
+    trapFocus(event) {
+      const $items = this.focusables();
+      if (!$items.length) {
+        event.preventDefault();
+        this.$menu.trigger('focus');
+        return;
+      }
+      const first = $items[0];
+      const last = $items[$items.length - 1];
+      const active = document.activeElement;
+      if (event.shiftKey && (active === first || active === this.$menu[0])) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && active === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    }
+
     render(data) {
+      const restoreFocus = this.focusOnRender || this.focusInMenu();
+      this.focusOnRender = false;
       this.$menu.empty();
       $('<div/>', {class: 'saved-filters-menu__heading', text: t('Saved filters')}).appendTo(this.$menu);
 
@@ -258,6 +297,11 @@
       }
 
       data.filters.forEach((filter) => this.renderItem(filter).appendTo(this.$menu));
+
+      if (restoreFocus) {
+        const $first = this.focusables().not('[aria-disabled="true"]').first();
+        ($first.length ? $first : this.$menu).trigger('focus');
+      }
     }
 
     renderItem(filter) {

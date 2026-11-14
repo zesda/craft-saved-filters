@@ -1,5 +1,10 @@
 # Release Notes for Saved Filters
 
+## 1.1.4 - 2026-11-14
+
+- Moved focus into the saved filters menu when it opens and back to the bookmark button when it closes. Tab now cycles inside the menu when it shows as a modal.
+- Set `aria-haspopup="dialog"` on the bookmark button.
+
 ## 1.1.3 - 2026-11-14
 
 - Made all interface strings translatable through the `saved-filters` translation category.
