@@ -1,5 +1,9 @@
 # Release Notes for Saved Filters
 
+## 1.1.6 - 2026-11-16
+
+- Fixed saved filters for a custom element source not being removed when the source is deleted. The project config listener was registered on a path Craft never matches.
+
 ## 1.1.5 - 2026-11-14
 
 - Fixed a filter with several rules not counting as already saved or applied when its rules were in a different order, such as after removing a rule and adding it back.

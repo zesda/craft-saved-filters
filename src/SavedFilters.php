@@ -109,19 +109,21 @@ class SavedFilters extends Plugin
         });
 
         $projectConfig = Craft::$app->getProjectConfig();
-        $path = ProjectConfig::PATH_ELEMENT_SOURCES . '.{elementType}';
-        $projectConfig->onUpdate($path, [$this, 'handleElementSourcesChange']);
-        $projectConfig->onRemove($path, [$this, 'handleElementSourcesChange']);
+        $projectConfig->onUpdate(ProjectConfig::PATH_ELEMENT_SOURCES, [$this, 'handleElementSourcesChange']);
+        $projectConfig->onRemove(ProjectConfig::PATH_ELEMENT_SOURCES, [$this, 'handleElementSourcesChange']);
     }
 
     public function handleElementSourcesChange(ConfigEvent $event): void
     {
         $keys = fn($sources) => array_column(is_array($sources) ? $sources : [], 'key');
-        $removed = array_diff($keys($event->oldValue), $keys($event->newValue));
+        $old = is_array($event->oldValue) ? $event->oldValue : [];
+        $new = is_array($event->newValue) ? $event->newValue : [];
 
-        foreach ($removed as $key) {
-            if (is_string($key) && str_starts_with($key, 'custom:')) {
-                $this->deleteForSource($key);
+        foreach ($old as $elementType => $sources) {
+            foreach (array_diff($keys($sources), $keys($new[$elementType] ?? [])) as $key) {
+                if (is_string($key) && str_starts_with($key, 'custom:')) {
+                    $this->deleteForSource($key);
+                }
             }
         }
     }
